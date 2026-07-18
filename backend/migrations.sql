@@ -67,20 +67,20 @@ CREATE INDEX IF NOT EXISTS
 
 -- How the square renditions were cut out of `original-{uuid}.jpg`, in that
 -- image's (post-EXIF-rotation) coordinates. Lets clients expand a cropped
--- preview into the uncropped original. NULL until `service/cron/photocrop`
--- backfills photos uploaded before these columns existed; `crop_attempted_at`
--- records that it tried, so photos it can't recover don't get retried forever.
+-- preview into the uncropped original. NULL for the few photos which predate
+-- the columns and whose crop the backfill couldn't recover.
 ALTER TABLE photo
     ADD COLUMN IF NOT EXISTS width INT,
     ADD COLUMN IF NOT EXISTS height INT,
     ADD COLUMN IF NOT EXISTS crop_top INT,
-    ADD COLUMN IF NOT EXISTS crop_left INT,
-    ADD COLUMN IF NOT EXISTS crop_attempted_at TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS crop_left INT;
 
--- The photocrop backfill's queue: tiny, and empties as the backlog drains.
-CREATE INDEX IF NOT EXISTS idx__photo__crop_backlog
-    ON photo(uuid)
-    WHERE width IS NULL AND crop_attempted_at IS NULL;
+-- The `photocrop` backfill has finished and been removed, taking its queue
+-- index and bookkeeping column with it.
+DROP INDEX IF EXISTS idx__photo__crop_backlog;
+
+ALTER TABLE photo
+    DROP COLUMN IF EXISTS crop_attempted_at;
 
 -- The geometry JSON is now shaped in the application (`commonsql.PHOTO_GEOMETRY`)
 -- rather than by a database function; drop the function this migration used to
