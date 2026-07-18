@@ -76,8 +76,9 @@ ALTER TABLE photo
     ADD COLUMN IF NOT EXISTS crop_left INT;
 
 -- The `photocrop` backfill has finished and been removed, taking its queue
--- index and bookkeeping column with it.
+-- index (under either of the names it had) and bookkeeping column with it.
 DROP INDEX IF EXISTS idx__photo__crop_backlog;
+DROP INDEX IF EXISTS idx__photo__crop_backlog__person_id;
 
 ALTER TABLE photo
     DROP COLUMN IF EXISTS crop_attempted_at;
